@@ -17,14 +17,21 @@ var log = require('logger')
 
 module.exports = Nihop
 
-function Nihop(title,banner){
-  if(!(this instanceof Nihop)) return new Nihop(title)
+function Nihop(command,banner){
+  if(!(this instanceof Nihop)) return new Nihop(command,banner)
   this.options = {}
   this.funx = {}
   this.doc = {}
   this.length = {}
-  this.title = title
-  this.banner= banner
+  this.command = command
+  this.banner = banner
+  this.option('help','h').do(function (){
+    console.log(this.usuage())
+  }).describe('display this help message')
+}
+
+function isOption(arg,long,short){
+  return new RegExp("^-+(" + long + "|" + short+")$").exec(arg)
 }
 
 Nihop.prototype = {
@@ -35,23 +42,33 @@ Nihop.prototype = {
     this.length[long] = length
 
     this.options[long] = {
-      length: length
+      length: length || 0
     , long: long
     , short: short
     , parse: function (args){
-        if(args[0] != '--' + long && args[0] != '-' + short)
+
+      if(!isOption(args[0],long,short))
           return false;
-      
-        args.shift() //option name
-      
+
+        var option = args.shift() //option name
+
         if(!length)
           return true
-        else if (length == 1)
-          return args.shift()
+        else if (length == 1){
+          var a =  args.shift()
+          return self.assertNotOption(a,"ERROR:\nexpected a value for option " + option + " not '" + a + "'\n")
+        }
         else if( length > 0){
           var r = []
-          for(var i = 0; i < length; i ++)
-            r.push(args.shift())
+          for(var i = 0; i < length; i ++){
+            var a = args.shift()
+          log("> " + option, a)
+            self.assertNotOption(a, 
+                "ERROR:\nexpected " + length + " values for " + option 
+              + " got: " + r.join(' ') + " then unexpected option: '" + a + "'\n")
+            r.push(a)
+          }
+          log("value of " + option, r)
           return r
         } else {
           var r = []
@@ -77,13 +94,12 @@ Nihop.prototype = {
           var option = self.options[name]
           var r = option.parse (args)
 
-          log("PARSE?",option,r,args)
-
           if(r){
             parsed[name] = r
-//            log(self.funx, option)
+            option.value = r
+
             if(option.do)
-              option.do.call(null,r,name,option)
+              option.do.call(self,r,option)
           
             return true
           }
@@ -91,8 +107,15 @@ Nihop.prototype = {
       }
       
       while(args.length){
-        if(!find(args))
-          parsed.args.push(args.shift()) 
+        if(!find(args)){
+          var arg = args.shift()
+
+          this.assertNotOption(arg,"ERROR:'" + arg + "' is not a known option.")
+
+          parsed.args.push(arg) 
+          if(this.doArg)
+            this.doArg(arg)
+        }
       }
     return parsed
   },
@@ -101,22 +124,52 @@ Nihop.prototype = {
 
     return this
   },
-  describe: function (desc){
+  arg: function (func){
+    this.doArg = func
+    return this
+  },
+  describe: function (desc,args){
     this.options[this.newOption].describe = desc
-
+    this.options[this.newOption].args = args
+    
     return this
   },
   usuage: function (){
     var u = ''
-    if(this.title)
-    u += this.title + '\n'
     if(this.banner)
     u += this.banner + '\n'
+    if(this.command)
+    u += this.command + '\n'
+
+    var max = 0
+      , self = this
+    u +=
+    Object.keys(this.options).map(function (name){
+      var option = self.options[name]
     
-    for(var name in this.options){
-      var option = this.options[name]
-      u += '--' + option.long + ',-' + option.short + '   ' + option.length + '   ' + option.describe + '\n'    
-    }
+      cmd = option.long == option.short ?  '-' + option.long  : '-' + option.short + ',--' + option.long
+    
+      var doc = 
+      { cmd: '  ' + cmd + ' ' + (option.args || '')
+      , desc: option.describe }
+      max = max > doc.cmd.length ? max : doc.cmd.length      
+      return doc
+    }).map(function (doc){
+      return pad(doc.cmd,max + 5) + doc.desc
+    }).join('\n')
+    
     return u
+  },
+  assertNotOption: function (arg, message){
+    if(arg[0] == '-'){
+      throw (message || "did not expect option '" + arg + "' at this point") + this.usuage()
+    }
+    return arg
   }
+}
+
+function pad(string,length){
+  while(string.length < length)
+    string += ' '
+  return string
 }
