@@ -34,29 +34,35 @@ Nihop.prototype = {
 
     this.length[long] = length
 
-    this.options[long] = function (args){
-      if(args[0] != '--' + long && args[0] != '-' + short)
-        return false;
+    this.options[long] = {
+      length: length
+    , long: long
+    , short: short
+    , parse: function (args){
+        if(args[0] != '--' + long && args[0] != '-' + short)
+          return false;
       
-      args.shift() //option name
+        args.shift() //option name
       
-      if(!length)
-        return true
-      else if (length == 1)
-        return args.shift()
-      else if( length > 0){
-        var r = []
-        for(var i = 0; i < length; i ++)
-          r.push(args.shift())
-        return r
-      } else {
-        var r = []
-        //stop if it's end of args list, or a new option is starting
-        while(args.length && args[0][0] != '-'){
-          r.push(args.shift())
+        if(!length)
+          return true
+        else if (length == 1)
+          return args.shift()
+        else if( length > 0){
+          var r = []
+          for(var i = 0; i < length; i ++)
+            r.push(args.shift())
+          return r
+        } else {
+          var r = []
+          //stop if it's end of args list, or a new option is starting
+          while(args.length && args[0][0] != '-'){
+            r.push(args.shift())
+          }
+          return r
         }
-        return r
       }
+
     }
 
     return this
@@ -67,16 +73,17 @@ Nihop.prototype = {
     var self = this
       
       function find (args){
-        for(var option in self.options){
-          var r = self.options[option] (args)
+        for(var name in self.options){
+          var option = self.options[name]
+          var r = option.parse (args)
 
           log("PARSE?",option,r,args)
 
           if(r){
-            parsed[option] = r
-            log(self.funx, option)
-            if(self.funx[option])
-              self.funx[option].call(null,r,option)
+            parsed[name] = r
+//            log(self.funx, option)
+            if(option.do)
+              option.do.call(null,r,name,option)
           
             return true
           }
@@ -90,12 +97,12 @@ Nihop.prototype = {
     return parsed
   },
   do: function (func){
-    this.funx[this.newOption] = func
+    this.options[this.newOption].do = func
 
     return this
   },
   describe: function (desc){
-    this.doc[this.newOption] = desc
+    this.options[this.newOption].describe = desc
 
     return this
   },
@@ -106,8 +113,9 @@ Nihop.prototype = {
     if(this.banner)
     u += this.banner + '\n'
     
-    for(var option in this.options){
-      u += '--' + option + '   ' + this.length[option] + '   ' + this.doc[option] + '\n'    
+    for(var name in this.options){
+      var option = this.options[name]
+      u += '--' + option.long + ',-' + option.short + '   ' + option.length + '   ' + option.describe + '\n'    
     }
     return u
   }
