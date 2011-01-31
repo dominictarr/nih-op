@@ -11,13 +11,13 @@ the options parser Dominic Tarr wrote
 
 quick example:
 
-  var Nihop = require('nih-op')
-  , parser = 
-  new Nihop ("node example [options]\n", "a banner that goes above the command\n")
-    .option ("boolean","b",0)
-      .do(function)//called after this option is parsed
-      .describe("an example boolean option")//describe this option for usuage
-    .arg(function)//called after a free argument is parsed
+    var Nihop = require('nih-op')
+    , parser = 
+    new Nihop ("node example [options]\n", "a banner that goes above the command\n")
+      .option ("boolean","b",0)
+        .do(function)//called after this option is parsed
+        .describe("an example boolean option")//describe this option for usuage
+      .arg(function)//called after a free argument is parsed
 
 
 see nih-op/example.js for more depth.
