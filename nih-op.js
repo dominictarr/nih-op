@@ -88,6 +88,13 @@ Nihop.prototype = {
   parse: function (args){
     var parsed = {args: []}
     var self = this
+    
+      //setup default values
+      for(var name in self.options){
+        if(self.options[name].default)
+          parsed[name] = self.options[name].default
+      }
+    
       
       function find (args){
         for(var name in self.options){
@@ -165,6 +172,10 @@ Nihop.prototype = {
       throw (message || "did not expect option '" + arg + "' at this point") + this.usuage()
     }
     return arg
+  },
+  default: function (value){
+    this.options[this.newOption].default = value
+    return this
   }
 }
 

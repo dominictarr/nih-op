@@ -165,3 +165,13 @@ exports ['throws on unexpected option'] = function (){
   })
 
 }
+
+exports ['default values'] = function (){
+  
+ var parser = Nihop("test").option('exe','x').default(1234)
+ 
+  assert.deepEqual
+    ( parser.parse(["hello"])
+    , {exe: 1234, args: ["hello"]})
+
+}
