@@ -1,5 +1,5 @@
 var Nihop = require('nih-op')
-  , inspect = require('util').inspect
+  , inspect = require('sys').inspect
   , parser = 
   new Nihop ("node example [options]\n", "a banner that goes above the command\n")
     .option ("boolean","b",0)

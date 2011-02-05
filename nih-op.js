@@ -13,7 +13,7 @@ Not-Invented-Here Options Parser
 
 //{name: [args] or return value of function
 
-var log = require('logger')
+var log = console.log
 
 module.exports = Nihop
 
@@ -62,13 +62,11 @@ Nihop.prototype = {
           var r = []
           for(var i = 0; i < length; i ++){
             var a = args.shift()
-          log("> " + option, a)
             self.assertNotOption(a, 
                 "ERROR:\nexpected " + length + " values for " + option 
               + " got: " + r.join(' ') + " then unexpected option: '" + a + "'\n")
             r.push(a)
           }
-          log("value of " + option, r)
           return r
         } else {
           var r = []
@@ -90,10 +88,10 @@ Nihop.prototype = {
     var self = this
     
       //setup default values
-      for(var name in self.options){
-        if(self.options[name].default)
-          parsed[name] = self.options[name].default
-      }
+    for(var name in self.options){
+      if(self.options[name].default)
+        parsed[name] = self.options[name].default
+    }
     
       
       function find (args){
